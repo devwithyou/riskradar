@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block title %}Scan Results - WebGuard{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <a href="{% url 'scan' %}" class="text-blue-600 hover:underline mb-4 inline-block">← New Scan</a>
+        <h1 class="text-4xl font-bold text-gray-900 mb-2">Security Scan Results</h1>
+        <p class="text-gray-600">{{ scan.url }}</p>
+        <p class="text-sm text-gray-500">Scanned on {{ scan.created_at|date:"F d, Y H:i" }}</p>
+    </div>
+
+    <!-- Score Card -->
+    <div class="card mb-8">
+        <div class="text-center">
+            <h2 class="text-2xl font-semibold mb-4">Security Score</h2>
+            <div class="mb-4">
+                <span class="text-6xl font-bold 
+                    {% if scan.score >= 80 %}text-green-600
+                    {% elif scan.score >= 50 %}text-yellow-600
+                    {% else %}text-red-600{% endif %}">
+                    {{ scan.score }}
+                </span>
+                <span class="text-3xl text-gray-400">/100</span>
+            </div>
+            
+            <!-- Score Bar -->
+            <div class="w-full bg-gray-200 rounded-full h-4 mb-4">
+                <div class="h-4 rounded-full transition-all duration-500
+                    {% if scan.score >= 80 %}bg-green-600
+                    {% elif scan.score >= 50 %}bg-yellow-600
+                    {% else %}bg-red-600{% endif %}" 
+                    style="width: {{ scan.score }}%">
+                </div>
+            </div>
+
+            <p class="text-gray-600">
+                {% if scan.score >= 80 %}
+                    🎉 Great! This site has good security practices.
+                {% elif scan.score >= 50 %}
+                    ⚠️ Moderate security. Some improvements needed.
+                {% else %}
+                    🚨 Critical security issues found. Immediate action recommended.
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Basic Info -->
+    <div class="card mb-8">
+        <h2 class="text-2xl font-semibold mb-4">Scan Information</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <p class="text-sm text-gray-600">Original URL</p>
+                <p class="font-mono text-sm break-all">{{ scan.url }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">Final URL</p>
+                <p class="font-mono text-sm break-all">{{ scan.final_url }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">Status Code</p>
+                <p class="font-mono text-sm">{{ scan.status_code }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">Total Issues</p>
+                <p class="font-mono text-sm">{{ scan.issues.count }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Issues by Severity -->
+    {% if scan.issues.exists %}
+    <div class="space-y-6">
+        <!-- High Severity -->
+        {% if issues_by_severity.high %}
+        <div class="card border-l-4 border-red-500">
+            <h3 class="text-xl font-semibold mb-4 flex items-center">
+                <span class="badge badge-high mr-3">High</span>
+                Critical Issues ({{ issues_by_severity.high|length }})
+            </h3>
+            <div class="space-y-4">
+                {% for issue in issues_by_severity.high %}
+                <div class="bg-red-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-red-900 mb-2">{{ issue.category }}</h4>
+                    <p class="text-red-800 mb-2">{{ issue.message }}</p>
+                    <p class="text-sm text-red-700">
+                        <strong>Recommendation:</strong> {{ issue.recommendation }}
+                    </p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Medium Severity -->
+        {% if issues_by_severity.medium %}
+        <div class="card border-l-4 border-yellow-500">
+            <h3 class="text-xl font-semibold mb-4 flex items-center">
+                <span class="badge badge-medium mr-3">Medium</span>
+                Moderate Issues ({{ issues_by_severity.medium|length }})
+            </h3>
+            <div class="space-y-4">
+                {% for issue in issues_by_severity.medium %}
+                <div class="bg-yellow-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-yellow-900 mb-2">{{ issue.category }}</h4>
+                    <p class="text-yellow-800 mb-2">{{ issue.message }}</p>
+                    <p class="text-sm text-yellow-700">
+                        <strong>Recommendation:</strong> {{ issue.recommendation }}
+                    </p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Low Severity -->
+        {% if issues_by_severity.low %}
+        <div class="card border-l-4 border-blue-500">
+            <h3 class="text-xl font-semibold mb-4 flex items-center">
+                <span class="badge badge-low mr-3">Low</span>
+                Minor Issues ({{ issues_by_severity.low|length }})
+            </h3>
+            <div class="space-y-4">
+                {% for issue in issues_by_severity.low %}
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-blue-900 mb-2">{{ issue.category }}</h4>
+                    <p class="text-blue-800 mb-2">{{ issue.message }}</p>
+                    <p class="text-sm text-blue-700">
+                        <strong>Recommendation:</strong> {{ issue.recommendation }}
+                    </p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="card bg-green-50 border-l-4 border-green-500">
+        <h3 class="text-xl font-semibold text-green-900 mb-2">🎉 No Issues Found!</h3>
+        <p class="text-green-800">
+            This website has excellent security practices. All checked security headers and configurations are in place.
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Raw Headers -->
+    <div class="card mt-8">
+        <h2 class="text-2xl font-semibold mb-4">Response Headers</h2>
+        <div class="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm overflow-x-auto">
+            {% for key, value in scan.raw_headers.items %}
+            <div class="mb-1">
+                <span class="text-blue-400">{{ key }}:</span> {{ value }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="mt-8 flex gap-4">
+        <a href="{% url 'scan' %}" class="btn btn-primary">Scan Another URL</a>
+        <a href="{% url 'history' %}" class="btn btn-secondary">View History</a>
+    </div>
+</div>
+{% endblock %}
+
+
